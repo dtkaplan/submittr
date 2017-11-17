@@ -16,13 +16,20 @@ ui <- fluidPage(
          textOutput("validlogin"),
          actionButton("connect", "Login"),
          textInput("table_name", "Name of event table", value = "higgins"),
-         textOutput("tablestate", inline = TRUE)
-
+         textOutput("tablestate", inline = TRUE),
+         hr(),
+         p("Selecting none means all will be used."),
+         selectInput("users", "Select students:", c(paste0("student", letters[1:6]))),
+         selectInput("document", "Select tutorials", c("Tutorial 1", "Second tutorial")),
+         selectInput("items", "Select items:", c("Exercise 1", "Exercise 2"))
       ),
 
       # Show a plot of the generated distribution
       mainPanel(
-         tableOutput("all_events")
+        tabsetPanel(
+          tabPanel("Counts", tableOutput("event_count")),
+          tabPanel("Raw events", tableOutput("all_events")),
+          type = "tabs", id = "main_panel")
       )
    )
 )
@@ -59,9 +66,22 @@ server <- function(input, output, session) {
      }
    })
    output$all_events <- renderTable({
-     if (!is.null(state$Event_table))
-       state$Event_table %>% mutate(timestamp = as.character(timestamp))
-     else data_frame("status" = "No table yet available.")
+     if (!is.null(state$Event_table)) {
+       state$Event_table %>%
+         mutate(timestamp = as.character(timestamp)) %>%
+         select(timestamp, user_id, type, label)
+     } else {
+       data_frame("status" = "No event table yet available.")
+     }
+   })
+   output$event_count <- renderTable({
+     if (!is.null(state$Event_table)) {
+       state$Event_table %>%
+         group_by(user_id, tutorial_id, label) %>%
+         summarize(count = n(), latest = as.character(max(timestamp)))
+     } else {
+       data_frame("status" = "No event table yet available.")
+     }
    })
 }
 
