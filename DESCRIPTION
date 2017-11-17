@@ -1,0 +1,15 @@
+Package: submittr
+Type: Package
+Title: Submit event items to a database registry
+Version: 0.1.0
+Author: Daniel Kaplan
+Maintainer: Daniel Kaplan <kaplan@macalester.edu>
+Description: Handles user sign-in and the submission of event items from an R program, Shiny app, or learnr tutorial to a database
+License: What license is it under?
+Depends: shiny, DBI, RPostgreSQL, dplyr, dbplyr, tidyr, jsonlite
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -1,0 +1,51 @@
+---
+title: "Submittr authentication by database"
+output: html_document
+runtime: shiny_prerendered
+---
+
+```{r setup-login, include = FALSE}
+library(submittr)
+```
+
+******************
+
+```{r echo = FALSE}
+span("Please log in:")
+textInput("user_name", "User ID:")
+passwordInput("password", "Password:")
+textOutput("login_success")
+```
+
+******************
+
+
+```{r echo = FALSE, context = "server"}
+# Connect to the database server
+options(tutorial.event_recorder = create_submit_to_db())
+# Shiny logic
+output$login_success <- renderText({"Please log in."})
+output$login_success <-
+  renderText({
+    Accounts <- submittr:::db_info$Password_table
+    id <- input$user_name
+    password <- input$password
+    if (is.null(Accounts)) return("No accounts set up yet.")
+    else {
+      ind <- which(id == Accounts$user)
+      if (length(ind) > 0) {
+        if (password == Accounts$passwd[ind[1]] ) {
+          set_user(id, Accounts$role[ind[1]],
+                        Accounts$group[ind[1]])
+          return("Login successful.")
+        } else {
+          clear_user() # accept entries, but no user id
+          return("Wrong password!")
+        }
+      } else {
+        clear_user() # accept entries, but no user id
+        return("Invalid user id.")
+      }
+    }
+  })
+```

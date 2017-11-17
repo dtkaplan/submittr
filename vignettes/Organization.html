@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Danny Kaplan" />
+
+<meta name="date" content="2017-11-17" />
+
+<title>Organization of submittr</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Organization of <code>submittr</code></h1>
+<h4 class="author"><em>Danny Kaplan</em></h4>
+<h4 class="date"><em>2017-11-17</em></h4>
+
+
+
+<p>The <code>submittr</code> package is intended for use logging events from the <code>learnr</code> system. This document explains what needs to be set up to use <code>submittr</code>.</p>
+<div id="base-requirements" class="section level2">
+<h2>Base requirements</h2>
+<ul>
+<li>One or more learnr tutorials with “exercises”, “questions” or other learnr components that generate events.</li>
+<li>Rmd file with runtime <code>shiny-prerendered</code> that handles the user login and connection with the database server. I’ll call this the login-Rmd document. An example is <code>system.file(&quot;login-mockup.Rmd&quot;, package = &quot;submittr&quot;)</code></li>
+<li>A PostgreSQL database accessible from the location where the tutorials will be run. (The dependence on PostgreSQL is simply because I’m developing the package with such a database. Eventually, I plan to generalize this to any <code>DBI</code>-package compatible database.)</li>
+<li>A password table within the database that contains user login credentials and other info as described below.</li>
+</ul>
+<div id="the-learnr-tutorial" class="section level3">
+<h3>The learnr tutorial</h3>
+<p>Write your tutorial in the ordinary way. To log events with <code>submittr</code>, you add one chunk in a conspicuous place in the document, typically at the start.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="st">`</span><span class="dt"></span><span class="st">``</span><span class="dt">{r child = &quot;[path to login-Rmd document]&quot;}</span>
+<span class="st">`</span><span class="st">``</span></code></pre></div>
+<p>Of course, you’ll replace the quoted string with the actual path to the login-Rmd document. For instance, you could use this:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="st">`</span><span class="dt"></span><span class="st">``</span><span class="dt">{r child = system.file(&quot;login-mockup.Rmd&quot;, package = &quot;submittr&quot;)}</span>
+<span class="st">`</span><span class="st">``</span></code></pre></div>
+<p>As you’ll see, the way you customize <code>submittr</code> to use your own database and passwords is by creating a suitable Rmd-login document which contains your credentials, etc. You can (and typically would) use the same Rmd-login document for multiple tutorials.</p>
+</div>
+<div id="the-database-server" class="section level3">
+<h3>The database server</h3>
+<p>You can create the database server in any way you like, but this is on you. <code>submittr</code> doesn’t create the database for you. At the time you create the database, you’ll be able to sort out the database login credentials, which you’ll be putting in the Rmd-login document.</p>
+</div>
+<div id="the-rmd-login-document" class="section level3">
+<h3>The Rmd-login document</h3>
+<p>To log events, <code>submittr</code> needs to connect to your database. Optionally, your database can contain a password file for user authentication. To customize <code>submittr</code> to your database and passwords, you configure an Rmd-login document.</p>
+<p>Strictly speaking, the Rmd-login document is a stand-alone Shiny app running in <code>shiny-prerendered</code> mode. The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection and read in the password file (if any): <code>create_submit_to_db()</code>. The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students.</p>
+<p>You may want to start by creating your own Rmd-login based on the example in <code>system.file(&quot;login-mockup.Rmd&quot;, package = &quot;submittr&quot;)</code>. Store the Rmd-login file somewhere convenient where it can be accessed when your tutorial is pre-rendered to HTML. (NEED TO SAY MORE ABOUT THIS. IN THE SAME DIRECTORY AS YOUR APP? In your home directory on your development machine?)</p>
+<p>The file should contain Shiny server logic that includes a chunk like this which calls the <code>create_submit_to_db()</code> function with your credentials.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="st">`</span><span class="dt"></span><span class="st">``</span><span class="dt">{r echo = FALSE, context = &quot;server&quot;}</span>
+<span class="dt"># Connect to the database server</span>
+<span class="dt">options(tutorial.event_recorder = </span>
+<span class="dt">        create_submit_to_db(</span>
+<span class="dt">          dbname = &quot;database_name&quot;,</span>
+<span class="dt">          host = &quot;database_url&quot;, # e.g. web625.webfaction.com</span>
+<span class="dt">          port = 5432, # or whatever</span>
+<span class="dt">          user = &quot;database_user&quot;, # user account on the database</span>
+<span class="dt">          password = &quot;secret_password&quot;, # user password CAUTION </span>
+<span class="dt">          table_name = &quot;event_table_name&quot;, # e.g. &quot;Stats101&quot;</span>
+<span class="dt">          password_table_name = &quot;password_table_name&quot;) # e.g. &quot;passwords&quot;</span>
+<span class="dt">          )</span>
+<span class="dt">        )</span></code></pre></div>
+<p>CAUTION: Note that your database password is being given in clear text. That’s a security no-no. Hopefully, someone can tell me a better way to do this. I’m hoping someone can tell me how to accomplish the task without clear text. Meanwhile, remember that you will typically deploy your learnr tutorial on a server, so users will have no ability to see the clear text. BUT …</p>
+<ul>
+<li>Watch out if you use GitHub. You don’t want to put your password in a place it can be seen.</li>
+<li>Watch out if you deploy the app as part of a package that you distribute to students. It’s easy for people to see the source code for Shiny apps in a package.</li>
+</ul>
+<p>If you don’t want to insist on password authentication for your app, give <code>password_table_name = &quot;&quot;</code> and take out the authentication logic from the Rmd-login document. You will still need to provide the credentials for your database, but you users won’t have to login.</p>
+<p>The <code>create_submit_to_db()</code> returns a function with the appropriate arguments for learnr to use as an event recorder. Setting the global option <code>tutorial.event_recorder</code> to be this function is what connects <code>submittr</code> to learnr.</p>
+</div>
+<div id="the-password-table" class="section level3">
+<h3>The password table</h3>
+<p>If you require user authentication, you’ll need to have a table in your database that contains user IDs and other information. (Hopefully, in the near future I figure out Google authentication so that all you will need is the user’s gmail address as the user ID and not have to store or manage user passwords.)</p>
+<p>You can create the password table using whatever software is appropriate. I create a CSV file and then upload it to the database as a table called “passwords”. Keep in mind that instructors often have to add new users and change passwords. So you may want to keep a local spreadsheet file, update that, and then reload the whole file to the database.</p>
+<p>The table (in CSV format) looks like this:</p>
+<pre><code>user, passwd, role, group
+Ann, ann, student, Danny
+Betty, betty, student, Danny</code></pre>
+<p>The <code>group</code> is there in case there are multiple instructors sharing an app or the app is used over multiple semesters.</p>
+</div>
+</div>
+<div id="looking-at-the-event-log" class="section level2">
+<h2>Looking at the event log</h2>
+<p>Presumably the reason you are logging learnr events is that you want to be able to look at them, perhaps for the purpose of assigning scores or seeing what are typical misconceptions.</p>
+<p><code>submittr</code> contains an app for this, in /Users/kaplan/KaplanFiles/Explore/submittr/inst/look_at_submissions.</p>
+<p>You’ll need to customize the app to connect to your database. To do this, make a copy of the app contained in the <code>&quot;look_at_submissions/app.R&quot;</code> directory. Modify that file to put the database credentials (and the name of the password file) here, similar to what you did in customizing the Rmd-login file.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">submittr<span class="op">:::</span><span class="kw">establish_db_connection</span>([credentials as arguments])</code></pre></div>
+<p>You probably don’t want to deploy the look_at_submissions app except on your own laptop computer. You can run it from there when you want to see the events. But, if you prefer, you can deploy it to a server so that you (or your colleagues or teaching assistants) can access the submissions.</p>
+<p><code>submittr</code> provides no facilities for maintaining a gradebook. But the look_at_submissions app can give you information you would use to assign a grade, which you can then store in whatever gradebook system is convenient.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

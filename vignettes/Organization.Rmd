@@ -1,0 +1,117 @@
+---
+title: "Organization of `submittr`"
+author: "Danny Kaplan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Organization of submittr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The `submittr` package is intended for use logging events from the `learnr` system. This document explains what needs to be set up to use `submittr`.
+
+## Base requirements
+
+- One or more learnr tutorials with "exercises", "questions" or other learnr components that generate events.
+- Rmd file with runtime `shiny-prerendered` that handles the user login and connection with the database server. I'll call this the login-Rmd document. An example is `system.file("login-mockup.Rmd", package = "submittr")`
+- A PostgreSQL database accessible from the location where the tutorials will be run. (The dependence on PostgreSQL is simply because I'm developing the package with such a database. Eventually, I plan to generalize this to any `DBI`-package compatible database.)
+- A password table within the database that contains user login credentials and other info as described below.
+
+### The learnr tutorial
+
+Write your tutorial in the ordinary way. To log events with `submittr`, you add one chunk in a conspicuous place in the document, typically at the start.
+
+```r
+```{r child = "[path to login-Rmd document]"}
+```
+```
+
+Of course, you'll replace the quoted string with the actual path to the login-Rmd document. For instance, you could use this:
+
+```r
+```{r child = system.file("login-mockup.Rmd", package = "submittr")}
+```
+```
+
+As you'll see, the way you customize `submittr` to use your own database and passwords is by creating a suitable Rmd-login document which contains your credentials, etc. You can (and typically would) use the same Rmd-login document for multiple tutorials.
+
+### The database server
+
+You can create the database server in any way you like, but this is on you. `submittr` doesn't create the database for you. At the time you create the database, you'll be able to sort out the database login credentials, which you'll be putting in the Rmd-login document.
+
+### The Rmd-login document
+
+To log events, `submittr` needs to connect to your database. Optionally, your database can contain a password file for user authentication. To customize `submittr` to your database and passwords, you configure an Rmd-login document. 
+
+Strictly speaking, the Rmd-login document is a stand-alone Shiny app running in `shiny-prerendered` mode. The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection and read in the password file (if any): `create_submit_to_db()`. The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students. 
+
+You may want to start by creating your own Rmd-login based on the example in `system.file("login-mockup.Rmd", package = "submittr")`. Store the Rmd-login file somewhere convenient where it can be accessed when your tutorial is pre-rendered to HTML. (NEED TO SAY MORE ABOUT THIS. IN THE SAME DIRECTORY AS YOUR APP? In your home directory on your development machine?)
+
+The file should contain Shiny server logic that includes a chunk like this which calls the `create_submit_to_db()` function with your credentials.
+
+```r
+```{r echo = FALSE, context = "server"}
+# Connect to the database server
+options(tutorial.event_recorder = 
+        create_submit_to_db(
+          dbname = "database_name",
+          host = "database_url", # e.g. web625.webfaction.com
+          port = 5432, # or whatever
+          user = "database_user", # user account on the database
+          password = "secret_password", # user password CAUTION 
+          table_name = "event_table_name", # e.g. "Stats101"
+          password_table_name = "password_table_name") # e.g. "passwords"
+          )
+        )
+```
+
+CAUTION: Note that your database password is being given in clear text. That's a security no-no. Hopefully, someone can tell me a better way to do this. I'm hoping someone can tell me how to accomplish the task without clear text. Meanwhile, remember that you will typically deploy your learnr tutorial on a server, so users will have no ability to see the clear text. BUT ...
+
+- Watch out if you use GitHub. You don't want to put your password in a place it can be seen.
+- Watch out if you deploy the app as part of a package that you distribute to students. It's easy for people to see the source code for Shiny apps in a package.
+
+If you don't want to insist on password authentication for your app, give `password_table_name = ""` and take out the authentication logic from the Rmd-login document. You will still need to provide the credentials for your database, but you users won't have to login. 
+
+The `create_submit_to_db()` returns a function with the appropriate arguments for learnr to use as an event recorder. Setting the global option `tutorial.event_recorder` to be this function is what connects `submittr` to learnr.
+
+### The password table
+
+If you require user authentication, you'll need to have a table in your database that contains user IDs and other information. (Hopefully, in the near future I figure out Google authentication so that all you will need is the user's gmail address as the user ID and not have to store or manage user passwords.)
+
+You can create the password table using whatever software is appropriate. I create a CSV file and then upload it to the database as a table called "passwords". Keep in mind that instructors often have to add new users and change passwords. So you may want to keep a local spreadsheet file, update that, and then reload the whole file to the database.
+
+The table (in CSV format) looks like this:
+```
+user, passwd, role, group
+Ann, ann, student, Danny
+Betty, betty, student, Danny
+```
+
+The `group` is there in case there are multiple instructors sharing an app or the app is used over multiple semesters.
+
+
+## Looking at the event log
+
+Presumably the reason you are logging learnr events is that you want to be able to look at them, perhaps for the purpose of assigning scores or seeing what are typical misconceptions. 
+
+`submittr` contains an app for this, in `r system.file("look_at_submissions", package = "submittr")`.
+
+You'll need to customize the app to connect to your database. To do this, make a copy of the app contained in the `"look_at_submissions/app.R"` directory. Modify that file to put the database credentials (and the name of the password file) here, similar to what you did in customizing the Rmd-login file.
+
+```r
+submittr:::establish_db_connection([credentials as arguments])
+```
+
+You probably don't want to deploy the look_at_submissions app except on your own laptop computer. You can run it from there when you want to see the events. But, if you prefer, you can deploy it to a server so that you (or your colleagues or teaching assistants) can access the submissions.
+
+`submittr` provides no facilities for maintaining a gradebook. But the look_at_submissions app can give you information you would use to assign a grade, which you can then store in whatever gradebook system is convenient.
+
+
