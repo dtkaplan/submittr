@@ -92,10 +92,17 @@ The table (in CSV format) looks like this:
 ```
 user, passwd, role, group
 Ann, ann, student, Danny
-Betty, betty, student, Danny
+Betty, betty, student, Maya
+Carol, carol, student, Maya
+Maya, maya, prof, ALL
+Danny, danny, prof, "Danny:Maya"
 ```
 
 The `group` is there in case there are multiple instructors sharing an app or the app is used over multiple semesters.
+
+If the group is `ALL`, then the user will have access to all groups. To give access to two or more groups, separate them by a colon, as in "Danny:Maya".
+
+User with a role of `student` will have access only to their own submissions.
 
 
 ## Looking at the event log
