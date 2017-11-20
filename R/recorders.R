@@ -147,11 +147,11 @@ event_to_df <- function(tutorial_id = "blank",
                         tutorial_version = "blank",
                         user_id = "setup",
                         event = "setup_table",
-                        data = list(label = "bogus", "Setting up the table")){
+                        data = list(label = "bogus", what ="Setting up the table")){
   # don't store the output from the command. It can be of arbitrary size.
   data["output"] <- NULL
   this_user <- submittr::get_user()
-
+cat("Data were:", capture.output(data), "\n")
   data_frame(
     timestamp = Sys.time(),
     tutorial_id = tutorial_id,

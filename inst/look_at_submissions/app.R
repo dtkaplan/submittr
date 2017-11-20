@@ -2,6 +2,14 @@
 library(shiny)
 library(submittr)
 
+# Convenience function for constructing menus
+with_all <- function(x) {
+  c(All = "", unique(x))
+}
+# detect when the input item has the implicit all selected instead of any
+# of the actual choices
+implicit_all_selected <- function(x) is.null(x) || "" %in% x
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -11,6 +19,7 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins
    sidebarLayout(
       sidebarPanel(
+         actionButton("Auto_login", "Quick login"), # DELETE THIS AFTER DEBUGGING
          textInput("user", "Grader ID"),
          textInput("password", "Password"),
          textOutput("validlogin"),
@@ -18,11 +27,10 @@ ui <- fluidPage(
          textInput("table_name", "Name of event table", value = "higgins"),
          textOutput("tablestate", inline = TRUE),
          hr(),
-         p("Selecting none means all will be used."),
-         selectizeInput("documents", "Select tutorials", c(All = ""), multiple = TRUE),
-         selectizeInput("items", "Select items:", c(All = ""), multiple = TRUE),
-         selectizeInput("groups", "Select student group:", c(All = ""), multiple = TRUE),
-         selectizeInput("users", "Select students:", c(All = ""), multiple = TRUE),
+         selectizeInput("documents", "Select documents", with_all(NULL), multiple = TRUE),
+         selectizeInput("items", "Select items:", with_all(NULL), multiple = TRUE),
+         selectizeInput("groups", "Select student group:", with_all(NULL), multiple = TRUE),
+         selectizeInput("submitters", "Select students:", with_all(NULL), multiple = TRUE),
          dateRangeInput("dates", "In interval:", start = "2017-01-01")
 
          ),
@@ -37,10 +45,8 @@ ui <- fluidPage(
    )
 )
 
-# Convenience function for constructing menus
-with_all <- function(x) {
-  c(All = "", unique(x))
-}
+
+
 get_students <- function(groups) {
   if (length(groups) == 0) unique(state$user) # students get access only to themselves
   else {
@@ -59,58 +65,53 @@ server <- function(input, output, session) {
   state$user <- ""
   state$validated <- FALSE
   state$Event_table <- NULL
-  state$groups <- ""
+  state$permitted_groups <- ""
+  state$selected_submitters <- NULL
+  state$selected_documents <- NULL
+  state$selected_items <- NULL
+  state$selected_groups <- NULL
+
+  # Shortcut for loging in while in development
+  observeEvent(input$Auto_login, {
+    state$validated <- TRUE
+    # all student groups permitted
+    state$permitted_groups <- unique(submittr:::db_info$Password_table$group)
+    state$user <- "Danny"
+    updateTextInput(session, "user", value = state$user)
+  })
+
+  # handle login events
   observeEvent(input$connect, {
     ind <- which(input$user == submittr:::db_info$Password_table$user)
     if (length(ind) > 0 && input$password == submittr:::db_info$Password_table$passwd[ind]) {
       state$user <- input$user
       state$validated <- TRUE
+      # state$permitted_groups is the permitted set of groups from which the prof can choose
       if (submittr:::db_info$Password_table$role[ind] == "prof") {
-        if (submittr:::db_info$Password_table$group == "ALL") {
+        if (submittr:::db_info$Password_table$group[ind] == "ALL") {
+          cat("ALL the groups are available.\n")
           # access to all the groups
-          state$groups = unique(submittr:::db_info$Password_table$group)
+          state$permitted_groups <- unique(submittr:::db_info$Password_table$group)
         } else {
           # just the specifically authorized groups
-          state$groups <- strsplit(submittr:::db_info$Password_table$group[ind], ":")
+          cat("Only specifically authorized groups.")
+          state$permitted_groups <- strsplit(submittr:::db_info$Password_table$group[ind], ":")
         }
       } else {
-        # but students get access only to themselves
-        state$groups = NULL
-      }
-
-
-    }
-  })
-  observeEvent(state$Event_table, {
-    # update the filter choices
-    if (! is.null(state$Event_table)) {
-      updateSelectizeInput(session, "documents", choices = with_all(state$Event_table$tutorial_id))
-      updateSelectizeInput(session, "items", choices = with_all(state$Event_table$label))
-      # To do ....
-      # narrow the following so that only the groups for the logged-in instructor will show
-      # or, better, eliminate the rows in the password and event tables at the very
-      # beginning of the login.
-      if (length(state$groups) == 1) {
-        updateSelectizeInput(session, "groups", choices = state$groups, selected = state$groups)
-      } else {
-        updateSelectizeInput(session, "groups", choices = with_all(state$groups))
+        state$permitted_groups <- NULL
       }
     }
   })
   observe({
-    if (state$validated) {
-      if (is.null(state$groups)) choices <- c(state$user)
-      else choices <- with_all(get_students(state$groups))
-      updateSelectizeInput(session, "users", choices = choices)
-    }
+    if (is.null(state$permitted_groups)) # students get access only to themselves
+      state$permitted_submitters <- input$user
+    else
+      state$permitted_submitters <-
+        unique(submittr:::db_info$Password_table %>%
+                 filter(group %in% state$permitted_groups) %>%
+                 .$user)
   })
-  output$validlogin <- renderText({ state$validated
-    ifelse(state$validated, "Access authorized", "Please log in")
-  })
-  output$tablestate <- renderText({
-    if (is.null(state$Event_table)) "No such table found."
-    else paste("Event table read in ", Sys.time())
-  })
+  # connect and disconnect from the database
   observe({
     if (state$validated) {
       if (dbExistsTable(submittr:::db_info$this_connection, input$table_name)) {
@@ -121,22 +122,130 @@ server <- function(input, output, session) {
       }
     }
   })
-  output$all_events <- renderTable({
-    if (!is.null(state$Event_table)) {
+
+  # get the selected_ components
+  selected_documents <- reactive({
+    cat("Setting selected documents\n")
+    if (implicit_all_selected(input$documents))
+      unique(state$Event_table$tutorial_id)
+    else
+      input$documents
+  })
+  selected_items <- reactive({
+    cat("Setting selected ITEMS\n")
+    if (implicit_all_selected(input$items))
+      unique(state$Event_table %>%
+                 filter(tutorial_id %in% selected_documents()) %>%
+                 .$label)
+    else input$items
+  })
+  selected_groups <- reactive({
+    cat("Setting selected GROUPS\n")
+    if (implicit_all_selected(input$groups))
+      state$permitted_groups
+    else
+      input$groups
+  })
+  selected_submitters <- reactive({
+    cat("Setting selected SUBMITTERS\n")
+    if (implicit_all_selected(input$submitters))
+      state$permitted_submitters
+    else
+      input$submitters
+  })
+  # Setting menu choices
+
+  # initialize the choice of documents and items when the event table is read in.
+  observeEvent(state$Event_table, {
+    state$permitted_documents <- unique(state$Event_table$tutorial_id)
+    state$permitted_items <- unique(state$Event_table$label)
+  })
+  observeEvent(state$permitted_documents, {
+    updateSelectizeInput(session, "documents", choices = with_all(state$permitted_documents))
+  })
+  # Give a choice of only those items in the permitted documents.
+  observe({
+    if (is.null(state$Event_table)) return()
+    choices <-
+      if (implicit_all_selected(input$documents)) {
+        # no documents explicitly selected, so use all documents and all items in them
+        with_all(state$Event_table %>%
+                   filter(tutorial_id %in% state$permitted_documents) %>%
+                   .$label)
+      } else {
+        unique(state$Event_table %>%
+                 filter(tutorial_id %in% input$documents) %>%
+                 .$label)
+      }
+    updateSelectizeInput(session, "items", choices = with_all(choices))
+  })
+
+  # Set menu choice of groups
+  observeEvent(state$permitted_groups, {
+      if (length(state$permitted_groups) == 1) {
+        updateSelectizeInput(session, "groups",
+                             choices = state$permitted_groups, selected = state$permitted_groups)
+      } else {
+        updateSelectizeInput(session, "groups",
+                             choices = with_all(state$permitted_groups))
+      }
+    })
+
+
+  # set the menu choice of submitters
+  observe({
+    if (length(state$permitted_submitters) == 1)
+      updateSelectizeInput(session, "submitters",
+                           choices = state$permitted_submitters, selected = state$permitted_submitters)
+    else
+      updateSelectizeInput(session, "submitters",
+                           choices = with_all(state$permitted_submitters))
+  })
+
+
+
+
+  output$validlogin <- renderText({ state$validated
+    ifelse(state$validated, "Access authorized", "Please log in")
+  })
+
+  output$tablestate <- renderText({
+    if (is.null(state$Event_table)) "No such table found."
+    else paste("Event table read in ", Sys.time())
+  })
+
+  # get all relevant submissions, given the document, item, student choices
+  relevant_submissions <- reactive({
+    cat("Selected submitters:", paste(selected_submitters(), collapse = ":"), "::\n")
+    Res <-
+      if (is.null(state$Event_table)) NULL
+    else {
       state$Event_table %>%
+        filter(login_id %in% selected_submitters()) %>%
+        filter(tutorial_id %in% selected_documents()) %>%
+        filter(label %in% selected_items())
+      ## NEED TO ADD IN DATE LIMITS
+    }
+    cat(nrow(Res), "relevant submissions.\n")
+    Res
+  })
+
+  output$all_events <- renderTable({
+    Tmp <- relevant_submissions()
+    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    else {
+      Tmp %>%
         mutate(timestamp = as.character(timestamp)) %>%
-        select(timestamp, user_id, type, label)
-    } else {
-      data_frame("status" = "No event table yet available.")
+        select(timestamp, login_id, type, label, data)
     }
   })
   output$event_count <- renderTable({
-    if (!is.null(state$Event_table)) {
-      state$Event_table %>%
+    Tmp <- relevant_submissions()
+    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    else {
+      Tmp %>%
         group_by(login_id, tutorial_id, label) %>%
         summarize(count = n(), latest = as.character(max(timestamp)))
-    } else {
-      data_frame("status" = "No event table yet available.")
     }
   })
 }

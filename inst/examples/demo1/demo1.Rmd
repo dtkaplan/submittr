@@ -10,6 +10,9 @@ runtime: shiny_prerendered
 library(learnr)
 library(submittr)
 knitr::opts_chunk$set(echo = FALSE) 
+# For code checking
+library(checkr)
+knitr::opts_chunk$set(exercise.checker = checkr::checkr_tutor)
 ```
 
 <!-- the login-mockup.Rmd file does the work of connecting to the 
@@ -31,6 +34,26 @@ Write the R code required to add two plus two:
 
 ```{r two-plus-two, exercise=TRUE}
 
+```
+
+```{r two-plus-two-hint, echo = FALSE}
+"Not a very useful hint, but a hint."
+```
+
+```{r two-plus-two-check, echo=FALSE}
+test_1 <- find_call("whatever + whatever",  
+            message = "need to use addition (+)")
+test_2 <- find_call("2 + whatever", 
+            message = "first argument should be 2")
+test_3 <- find_call("whatever + 2", 
+            message = "second argument should be 2")
+test_4 <- check_value(agrees(x == 4), 
+            message = "the result should be 4")
+USER_CODE %>% test_1 %>% test_2 %>% test_3 %>% final_ %>% test_4
+```
+
+```{r, two-plus-two-code-check}
+USER_CODE %>% check_blanks() 
 ```
 
 ### Exercise with Code
@@ -84,3 +107,6 @@ quiz(
 )
 ```
 
+## Video
+
+![](https://youtu.be/zNzZ1PfUDNk){width="560" height="315"}

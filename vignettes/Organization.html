@@ -12,7 +12,7 @@
 
 <meta name="author" content="Danny Kaplan" />
 
-<meta name="date" content="2017-11-17" />
+<meta name="date" content="2017-11-20" />
 
 <title>Organization of submittr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Organization of <code>submittr</code></h1>
 <h4 class="author"><em>Danny Kaplan</em></h4>
-<h4 class="date"><em>2017-11-17</em></h4>
+<h4 class="date"><em>2017-11-20</em></h4>
 
 
 
@@ -131,8 +131,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The table (in CSV format) looks like this:</p>
 <pre><code>user, passwd, role, group
 Ann, ann, student, Danny
-Betty, betty, student, Danny</code></pre>
+Betty, betty, student, Maya
+Carol, carol, student, Maya
+Maya, maya, prof, ALL
+Danny, danny, prof, &quot;Danny:Maya&quot;</code></pre>
 <p>The <code>group</code> is there in case there are multiple instructors sharing an app or the app is used over multiple semesters.</p>
+<p>If the group is <code>ALL</code>, then the user will have access to all groups. To give access to two or more groups, separate them by a colon, as in “Danny:Maya”.</p>
+<p>User with a role of <code>student</code> will have access only to their own submissions.</p>
 </div>
 </div>
 <div id="looking-at-the-event-log" class="section level2">
