@@ -38,8 +38,19 @@ ui <- fluidPage(
       # Show a plot of the generated distribution
       mainPanel(
         tabsetPanel(
-          tabPanel("Counts", tableOutput("event_count")),
-          tabPanel("Raw events", tableOutput("all_events")),
+          tabPanel("Counts",
+                   selectizeInput("breakdown_vars", "Break down by:",
+                                  choices = c("None" = "", students = "login_id",
+                                              documents = "tutorial_id",
+                                              items = "label",
+                                              type = "type",
+                                              "is correct" = "correct"),
+                                  multiple = TRUE),
+                   tableOutput("event_count")
+                   ),
+          tabPanel("Raw events",
+                   tableOutput("all_events")
+                   ),
           type = "tabs", id = "main_panel")
       )
    )
@@ -216,17 +227,17 @@ server <- function(input, output, session) {
 
   # get all relevant submissions, given the document, item, student choices
   relevant_submissions <- reactive({
-    cat("Selected submitters:", paste(selected_submitters(), collapse = ":"), "::\n")
     Res <-
-      if (is.null(state$Event_table)) NULL
-    else {
+      if (is.null(state$Event_table)) {
+        NULL
+    } else {
       state$Event_table %>%
         filter(login_id %in% selected_submitters()) %>%
         filter(tutorial_id %in% selected_documents()) %>%
         filter(label %in% selected_items())
       ## NEED TO ADD IN DATE LIMITS
     }
-    cat(nrow(Res), "relevant submissions.\n")
+
     Res
   })
 
@@ -243,8 +254,12 @@ server <- function(input, output, session) {
     Tmp <- relevant_submissions()
     if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
     else {
+      if ("login_id" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(login_id, add = TRUE)
+      if ("tutorial_id" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(tutorial_id, add = TRUE)
+      if ("label" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(label, add = TRUE)
+      if ("type" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(type, add = TRUE)
+      if ("correct" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(correct, add = TRUE)
       Tmp %>%
-        group_by(login_id, tutorial_id, label) %>%
         summarize(count = n(), latest = as.character(max(timestamp)))
     }
   })

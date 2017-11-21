@@ -151,7 +151,12 @@ event_to_df <- function(tutorial_id = "blank",
   # don't store the output from the command. It can be of arbitrary size.
   data["output"] <- NULL
   this_user <- submittr::get_user()
-cat("Data were:", capture.output(data), "\n")
+  if ( ! "label" %in% names(data)) data$label <- "unlabeled"
+  cat("Data were:", capture.output(data), "\n")
+  correct <-
+    if ("correct" %in% names(data)) data$correct
+    else if ("feedback" %in% names(data)) data$feedback$correct
+    else "na"
   data_frame(
     timestamp = Sys.time(),
     tutorial_id = tutorial_id,
@@ -161,6 +166,7 @@ cat("Data were:", capture.output(data), "\n")
     login_group = this_user$group,
     type = event,
     label = data$label,
+    correct = correct,
     data = toJSON(data)
   )
 }

@@ -32,7 +32,7 @@ knitr::opts_chunk$set(exercise.checker = checkr::checkr_tutor)
 
 Write the R code required to add two plus two: 
 
-```{r two-plus-two, exercise=TRUE}
+```{r two-plus-two, exercise=TRUE} 
 
 ```
 
