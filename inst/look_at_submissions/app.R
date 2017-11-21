@@ -48,6 +48,14 @@ ui <- fluidPage(
                                   multiple = TRUE),
                    tableOutput("event_count")
                    ),
+          tabPanel("Questions",
+                   checkboxInput("questions_by_student", 'Breakdown by student', FALSE),
+                   tableOutput("question_display")
+                   ),
+          tabPanel("Code",
+                   checkboxInput("code_by_student", 'Breakdown by student', FALSE),
+                   htmlOutput("code_display")
+                   ),
           tabPanel("Raw events",
                    tableOutput("all_events")
                    ),
@@ -262,6 +270,69 @@ server <- function(input, output, session) {
       Tmp %>%
         summarize(count = n(), latest = as.character(max(timestamp)))
     }
+  })
+  output$question_display <- renderTable({
+    Tmp <- relevant_submissions()
+    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    # pull out just the questions
+    Tmp <- Tmp %>%
+      filter(type == "question_submission")
+    # extract out the contents of the <data> field
+    data_fields <- Tmp$data
+    question <- correct <- answers <- character(nrow(Tmp))
+    for (k in 1:nrow(Tmp)) {
+      raw <- fromJSON(data_fields[k])
+      answers[k] <- paste(paste0("(", raw$answers, ")"), collapse = "::")
+      question[k] <- raw$question
+      correct[k] <- raw$correct
+    }
+    Tmp$answers <- answers
+    Tmp$correct <- correct
+    Tmp$question <- question
+    Tmp <- Tmp %>% group_by(label, answers, correct)
+    if (input$questions_by_student) Tmp <- Tmp %>% group_by(login_id, add = TRUE)
+
+    Tmp %>%
+      summarise(count = n(), latest = as.character(max(timestamp))) %>%
+      arrange(label, answers)
+  })
+  output$code_display <- renderText({
+    Tmp <- relevant_submissions()
+    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    # pull out just the questions
+    Tmp <- Tmp %>%
+      filter(type == "exercise_submission")
+    # extract out the contents of the <data> field
+    data_fields <- Tmp$data
+    checked <- message <- correct <- code <- character(nrow(Tmp))
+    for (k in 1:nrow(Tmp)) {
+      raw <- fromJSON(data_fields[k])
+      code[k] <- HTML(paste(HTML("<code>"),
+                            gsub("([^ \t\r\n])[ \r\t\n]+$", "\\1", raw$code),  # remove trailing spaces
+                            HTML("</code>")))
+      if (raw$checked) {
+        message[k] <- raw$feedback$message
+        correct[k] <- raw$feedback$correct
+      } else {
+        message[k] <- "not checked"
+        correct[k] <- NA
+      }
+    }
+    Tmp$message <- message
+    Tmp$correct <- correct
+    Tmp$code <- code
+    Tmp <- Tmp %>% group_by(label, correct, message, code)
+    if (input$code_by_student) Tmp <- Tmp %>% group_by(login_id, add = TRUE)
+
+    Tmp %>%
+      summarise(count = n()) %>%
+      arrange(label, correct, message) %>%
+      knitr::kable(., format = "html", escape = TRUE) -> foo
+    goo <- gsub("&lt;code&gt;", "<pre>", foo)
+    hoo <- gsub("&lt;/code&gt;", "</pre>", goo)
+
+
+    hoo
   })
 }
 

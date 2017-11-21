@@ -68,6 +68,12 @@ add <- function() {
 }
 ```
 
+```{r add-function-check, echo=FALSE}
+test_1 <- find_names("add",  
+            message = "Never put add in a command.")
+USER_CODE %>% test_1 
+```
+
 ## Topic 2  
 
 ### Exercise with Hint
