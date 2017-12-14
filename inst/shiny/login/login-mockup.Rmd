@@ -13,15 +13,24 @@ runtime: shiny_prerendered
 
 ```{r setup-login, include = FALSE}
 library(submittr)
+#Formatting the credential boxes to be side-by-side
+textInputRow<-function (inputId, label, value = "", type = "text",
+                        message_after = "", message_before = "") 
+{
+    div(style="display:inline-block;",
+        message_before,
+        tags$label(label, `for` = inputId), 
+        tags$input(id = inputId, type = type, value = value,class="input-small"),
+        message_after)
+}
 ```
 
 ******************
 
 ```{r echo = FALSE}
-span("Please log in:")
-textInput("user_name", "User ID:")
-passwordInput("password", "Password:")
-textOutput("login_success")
+textInputRow("user_name", "Login ID:")
+tmp <- textOutput("login_success", inline = TRUE)
+textInputRow("password", "Passwd:", type = "password", message_after = tmp)
 ```
 
 ******************
