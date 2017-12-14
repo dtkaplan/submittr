@@ -9,8 +9,6 @@
 #'
 #' For communicating account information from Shiny to learnr.
 
-
-
 #' @rdname user_data
 #' @export
 set_user <- function(user, role, group) {

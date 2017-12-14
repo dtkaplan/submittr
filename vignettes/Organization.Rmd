@@ -41,7 +41,9 @@ Of course, you'll replace the quoted string with the actual path to the login-Rm
 ```
 ```
 
-As you'll see, the way you customize `submittr` to use your own database and passwords is by creating a suitable Rmd-login document which contains your credentials, etc. You can (and typically would) use the same Rmd-login document for multiple tutorials.
+Use your own `"login-mockup.Rmd"` file if you want to customize the appearance of the login blocks in the learnr app. Other than that, there's no reason not to use the system file.
+
+The Rmd-login document is a stand-alone Shiny app running in `shiny-prerendered` mode. By using this stand-alone app as a "child" chunk in your document, you are integrating the app into your learnr document.  The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection: `create_submit_to_db()`. Among other things, `create_submit_to_db()` reads in the student-login password file (if any): . The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students. 
 
 ### The database server
 
@@ -51,7 +53,7 @@ You can create the database server in any way you like, but this is on you. `sub
 
 To log events, `submittr` needs to connect to your database. Optionally, your database can contain a password file for user authentication. To customize `submittr` to your database and passwords, you configure an Rmd-login document. 
 
-Strictly speaking, the Rmd-login document is a stand-alone Shiny app running in `shiny-prerendered` mode. The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection and read in the password file (if any): `create_submit_to_db()`. The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students. 
+
 
 You may want to start by creating your own Rmd-login based on the example in `system.file("login-mockup.Rmd", package = "submittr")`. Store the Rmd-login file somewhere convenient where it can be accessed when your tutorial is pre-rendered to HTML. (NEED TO SAY MORE ABOUT THIS. IN THE SAME DIRECTORY AS YOUR APP? In your home directory on your development machine?)
 
@@ -62,11 +64,6 @@ The file should contain Shiny server logic that includes a chunk like this which
 # Connect to the database server
 options(tutorial.event_recorder = 
         create_submit_to_db(
-          dbname = "database_name",
-          host = "database_url", # e.g. web625.webfaction.com
-          port = 5432, # or whatever
-          user = "database_user", # user account on the database
-          password = "secret_password", # user password CAUTION 
           table_name = "event_table_name", # e.g. "Stats101"
           password_table_name = "password_table_name") # e.g. "passwords"
           )

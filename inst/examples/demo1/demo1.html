@@ -50,6 +50,12 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
      -  options(tutorial.event_recorder = submit_via_cat)
      -  options(tutorial.event_recorder = create_submit_to_file("~/Downloads/eventlog.txt")) 
 -->
+<!-- You can compile this file on its own to test your database connection.
+  -- There MUST be a file in the directory named `dbkeys` which contains the 
+     database login information. See 
+     system.file("dbkeys-example.yml", package = "submittr")
+     for the format
+     -->
 <hr />
 <p><span>Please log in:</span><div class="form-group shiny-input-container">
 <label for="user_name">User ID:</label>
@@ -129,27 +135,27 @@ USER_CODE %&gt;% test_1 </code></pre>
 <tr>
 <td>
 
-<div id="htmlwidget-617941e4d3f89b31d27c" style="width:100%;height:auto;", class = "quiz html-widget">
+<div id="htmlwidget-96686bc878196f117bdc" style="width:100%;height:auto;", class = "quiz html-widget">
 <div class="panel panel-default">
 <div class="panel-body quizArea">
 </div>
 </div>
 </div>
 
-<script type="application/json" data-for="htmlwidget-617941e4d3f89b31d27c">{"x":{"question":"Which package contains functions for installing other R packages?","answers":[{"option":"base","correct":false,"message":null},{"option":"tools","correct":false,"message":null},{"option":"utils","correct":true,"message":null},{"option":"codetools","correct":false,"message":null}],"label":"quiz-1","skipStartButton":true,"perQuestionResponseAnswers":true,"perQuestionResponseMessaging":true,"preventUnanswered":true,"displayQuestionCount":false,"displayQuestionNumber":false,"disableRanking":true,"nextQuestionText":"","checkAnswerText":"Submit Answer","allowRetry":false,"randomSortAnswers":false,"json":{"info":{"name":"","main":""},"questions":[{"q":"Which package contains functions for installing other R packages?","a":[{"option":"base","correct":false,"message":null},{"option":"tools","correct":false,"message":null},{"option":"utils","correct":true,"message":null},{"option":"codetools","correct":false,"message":null}],"correct":"Correct!","incorrect":"Incorrect."}]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-96686bc878196f117bdc">{"x":{"question":"Which package contains functions for installing other R packages?","answers":[{"option":"base","correct":false,"message":null},{"option":"tools","correct":false,"message":null},{"option":"utils","correct":true,"message":null},{"option":"codetools","correct":false,"message":null}],"label":"quiz-1","skipStartButton":true,"perQuestionResponseAnswers":true,"perQuestionResponseMessaging":true,"preventUnanswered":true,"displayQuestionCount":false,"displayQuestionNumber":false,"disableRanking":true,"nextQuestionText":"","checkAnswerText":"Submit Answer","allowRetry":false,"randomSortAnswers":false,"json":{"info":{"name":"","main":""},"questions":[{"q":"Which package contains functions for installing other R packages?","a":[{"option":"base","correct":false,"message":null},{"option":"tools","correct":false,"message":null},{"option":"utils","correct":true,"message":null},{"option":"codetools","correct":false,"message":null}],"correct":"Correct!","incorrect":"Incorrect."}]}},"evals":[],"jsHooks":[]}</script>
 </td>
 </tr>
 <tr>
 <td>
 
-<div id="htmlwidget-0ed1a9df6cc8ec9e195f" style="width:100%;height:auto;", class = "quiz html-widget">
+<div id="htmlwidget-c4c5ab57bc41e5ccac93" style="width:100%;height:auto;", class = "quiz html-widget">
 <div class="panel panel-default">
 <div class="panel-body quizArea">
 </div>
 </div>
 </div>
 
-<script type="application/json" data-for="htmlwidget-0ed1a9df6cc8ec9e195f">{"x":{"question":"Which of the R packages listed below are used to create plots?","answers":[{"option":"lattice","correct":true,"message":null},{"option":"tools","correct":false,"message":null},{"option":"stats","correct":false,"message":null},{"option":"grid","correct":true,"message":null}],"label":"quiz-2","skipStartButton":true,"perQuestionResponseAnswers":true,"perQuestionResponseMessaging":true,"preventUnanswered":true,"displayQuestionCount":false,"displayQuestionNumber":false,"disableRanking":true,"nextQuestionText":"","checkAnswerText":"Submit Answer","allowRetry":false,"randomSortAnswers":false,"json":{"info":{"name":"","main":""},"questions":[{"q":"Which of the R packages listed below are used to create plots?","a":[{"option":"lattice","correct":true,"message":null},{"option":"tools","correct":false,"message":null},{"option":"stats","correct":false,"message":null},{"option":"grid","correct":true,"message":null}],"correct":"Correct!","incorrect":"Incorrect."}]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-c4c5ab57bc41e5ccac93">{"x":{"question":"Which of the R packages listed below are used to create plots?","answers":[{"option":"lattice","correct":true,"message":null},{"option":"tools","correct":false,"message":null},{"option":"stats","correct":false,"message":null},{"option":"grid","correct":true,"message":null}],"label":"quiz-2","skipStartButton":true,"perQuestionResponseAnswers":true,"perQuestionResponseMessaging":true,"preventUnanswered":true,"displayQuestionCount":false,"displayQuestionNumber":false,"disableRanking":true,"nextQuestionText":"","checkAnswerText":"Submit Answer","allowRetry":false,"randomSortAnswers":false,"json":{"info":{"name":"","main":""},"questions":[{"q":"Which of the R packages listed below are used to create plots?","a":[{"option":"lattice","correct":true,"message":null},{"option":"tools","correct":false,"message":null},{"option":"stats","correct":false,"message":null},{"option":"grid","correct":true,"message":null}],"correct":"Correct!","incorrect":"Incorrect."}]}},"evals":[],"jsHooks":[]}</script>
 </td>
 </tr>
 </table>
@@ -173,8 +179,12 @@ learnr:::register_http_handlers(session, metadata = list(version = 0.1))
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
-# Connect to the database server
-options(tutorial.event_recorder = create_submit_to_db())
+# Connect to the database server. You can customize the name of the table for 
+# storing the submissions, as well as the name of the table holding student login 
+# passwords. 
+options(tutorial.event_recorder = 
+          submittr::create_submit_to_db(table_name = "higgins",
+                              password_table_name = "passwords"))
 # Shiny logic
 output$login_success <- renderText({"Please log in."})
 output$login_success <-
@@ -187,15 +197,14 @@ output$login_success <-
       ind <- which(id == Accounts$user)
       if (length(ind) > 0) {
         if (password == Accounts$passwd[ind[1]] ) {
-          set_user(id, Accounts$role[ind[1]],
-                        Accounts$group[ind[1]])
+          submittr::set_user(id, Accounts$role[ind[1]], Accounts$group[ind[1]])
           return("Login successful.")
         } else {
-          clear_user() # accept entries, but no user id
+          submittr::clear_user() # accept entries, but no user id
           return("Wrong password!")
         }
       } else {
-        clear_user() # accept entries, but no user id
+        submittr::clear_user() # accept entries, but no user id
         return("Invalid user id.")
       }
     }

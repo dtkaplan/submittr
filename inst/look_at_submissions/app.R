@@ -1,6 +1,7 @@
 # UI for looking at learnr-related submitted events
 library(shiny)
 library(submittr)
+library(dplyr)
 
 # Convenience function for constructing menus
 with_all <- function(x) {
@@ -77,8 +78,13 @@ get_students <- function(groups) {
 }
 
 server <- function(input, output, session) {
-  # TO DO: Find a way to pass the parameters into establish_db_connection()
-  submittr:::establish_db_connection() # puts connection in submittr:::db_info
+  # Make sure there is a "dbkeys.yml" in the app's main directory
+  file_check <- dir("dbkeys.yml")
+  if (length(file_check))
+    stop("Make sure there is a dbkeys.yml file in the directory of this app.")
+  # if there is, establish the database connection
+  submittr:::establish_db_connection(table_name = "higgins",
+                                     password_table_name = "passwords") # puts connection in submittr:::db_info
   cat("Connection is", capture.output(submittr:::db_info$this_connection))
   state <- reactiveValues()
   state$user <- ""
@@ -251,7 +257,7 @@ server <- function(input, output, session) {
 
   output$all_events <- renderTable({
     Tmp <- relevant_submissions()
-    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    if (is.null(Tmp)) dplyr::data_frame("status" = "No event table yet available.")
     else {
       Tmp %>%
         mutate(timestamp = as.character(timestamp)) %>%
@@ -260,7 +266,7 @@ server <- function(input, output, session) {
   })
   output$event_count <- renderTable({
     Tmp <- relevant_submissions()
-    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    if (is.null(Tmp)) dplyr::data_frame("status" = "No event table yet available.")
     else {
       if ("login_id" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(login_id, add = TRUE)
       if ("tutorial_id" %in% input$breakdown_vars) Tmp <- Tmp %>% group_by(tutorial_id, add = TRUE)
@@ -273,7 +279,7 @@ server <- function(input, output, session) {
   })
   output$question_display <- renderTable({
     Tmp <- relevant_submissions()
-    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    if (is.null(Tmp)) dplyr::data_frame("status" = "No event table yet available.")
     # pull out just the questions
     Tmp <- Tmp %>%
       filter(type == "question_submission")
@@ -281,7 +287,7 @@ server <- function(input, output, session) {
     data_fields <- Tmp$data
     question <- correct <- answers <- character(nrow(Tmp))
     for (k in 1:nrow(Tmp)) {
-      raw <- fromJSON(data_fields[k])
+      raw <- jsonlite::fromJSON(data_fields[k])
       answers[k] <- paste(paste0("(", raw$answers, ")"), collapse = "::")
       question[k] <- raw$question
       correct[k] <- raw$correct
@@ -298,7 +304,7 @@ server <- function(input, output, session) {
   })
   output$code_display <- renderText({
     Tmp <- relevant_submissions()
-    if (is.null(Tmp)) data_frame("status" = "No event table yet available.")
+    if (is.null(Tmp)) dplyr::data_frame("status" = "No event table yet available.")
     # pull out just the questions
     Tmp <- Tmp %>%
       filter(type == "exercise_submission")
@@ -306,7 +312,7 @@ server <- function(input, output, session) {
     data_fields <- Tmp$data
     checked <- message <- correct <- code <- character(nrow(Tmp))
     for (k in 1:nrow(Tmp)) {
-      raw <- fromJSON(data_fields[k])
+      raw <- jsonlite::fromJSON(data_fields[k])
       code[k] <- HTML(paste(HTML("<code>"),
                             gsub("([^ \t\r\n])[ \r\t\n]+$", "\\1", raw$code),  # remove trailing spaces
                             HTML("</code>")))

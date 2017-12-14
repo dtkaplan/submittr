@@ -10,14 +10,21 @@ submit_via_cat(tutorial_id, tutorial_version, user_id, event, data)
 
 create_submit_to_file(fname)
 
-create_submit_to_db(dbname = "logevents1", host = "web625.webfaction.com",
-  port = 5432, user = "logevents1", password = "learnr555",
-  table_name = "higgins", password_table_name = "passwords",
-  restart = FALSE)
+create_submit_to_db(table_name = "higgins",
+  password_table_name = "passwords", restart = FALSE)
 }
 \arguments{
-\item{restart}{If `TRUE`, empty the table on the database. Be careful!}
+\item{fname}{text string giving the name of the file for storage}
+
+\item{table_name}{string giving the name of the table in your database to use for storing submissions}
+
+\item{password_table_name}{string giving the name of the table in your database containing
+student (and grader) login credentials}
+
+\item{restart}{For development purposes only. If `TRUE` empties the submission table.}
 }
 \description{
 A submitted event consists of a list with several text elements
+
+Submit events to a text file in JSON format
 }

@@ -1,0 +1,6 @@
+dbname: whatever_the_name_is
+host: a_URL_like_web625.webfaction.com
+port: typicall_5432
+user: fred
+password: my_secret
+

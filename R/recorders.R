@@ -13,6 +13,9 @@ submit_via_cat <- function(tutorial_id,
   cat("event: ", event, "\n", sep = "")
   cat(capture.output(data), "\n")
 }
+#' Submit events to a text file in JSON format
+#'
+#' @param fname text string giving the name of the file for storage
 #' @rdname recorders
 #' @export
 create_submit_to_file <- function(fname) {
@@ -20,33 +23,27 @@ create_submit_to_file <- function(fname) {
            tutorial_version,
            user_id,
            event, data) {
-    str <- jsonlite::toJSON(
-      event_to_df(tutorial_id, tutorial_version, user_id, event, data)
-    )
+    str <-
+      jsonlite::toJSON(
+        event_to_df(tutorial_id, tutorial_version, user_id, event, data))
+
     cat(str, "\n\n\n")
     cat(str, "\n", file = fname, append = TRUE)
   }
 }
 
 #' @rdname recorders
-#' @param restart If `TRUE`, empty the table on the database. Be careful!
+#' @param table_name string giving the name of the table in your database to use for storing submissions
+#' @param password_table_name string giving the name of the table in your database containing
+#' student (and grader) login credentials
+#' @param restart For development purposes only. If `TRUE` empties the submission table.
 #' @export
-create_submit_to_db <- function(dbname = "logevents1",
-                                host = "web625.webfaction.com",
-                                port = 5432,
-                                user = "logevents1",
-                                password = "learnr555",
-                                table_name = "higgins",
+create_submit_to_db <- function(table_name = "higgins",
                                 password_table_name = "passwords",
                                 restart = FALSE) {
-  establish_db_connection(dbname = dbname,
-                                      host = host,
-                                      port = port,
-                                      user = user,
-                                      password = password,
-                                      table_name = table_name,
-                                      password_table_name = "passwords",
-                                      restart = FALSE)
+  establish_db_connection(table_name = table_name,
+                          password_table_name = "passwords",
+                          restart = FALSE)
 
   # return the actual recorder function
   # learnr will call this function
@@ -56,9 +53,16 @@ create_submit_to_db <- function(dbname = "logevents1",
            event = "empty event", data = list(label = "empty")) {
     event <- event_to_df(tutorial_id, tutorial_version, user_id, event, data)
 
-    dbWriteTable(get_this_connection(),
-                 submittr:::db_info$this_connection_info$table_name,
-                 event, append = TRUE, row.names = FALSE)
+    # Which events to discard: exercises where "run" rather than "submit" was pressed.
+    if (event$type == "exercise_submission" &&
+        "checked" %in% names(data) &&
+        (! data$checked)) {
+      return
+    } else {
+      dbWriteTable(get_this_connection(),
+                   submittr:::db_info$this_connection_info$table_name,
+                   event, append = TRUE, row.names = FALSE)
+    }
   }
 
 }
@@ -96,28 +100,26 @@ get_this_connection <- function() {
 
 # Establish a connection to the database
 #
+# There needs to be a file in the working directory, dbkeys.yaml, that contains
+# the database login information.
 
 
-establish_db_connection <- function(dbname = "logevents1",
-                                 host = "web625.webfaction.com",
-                                 port = 5432,
-                                 user = "logevents1",
-                                 password = "learnr555",
-                                 table_name = "higgins",
-                                 password_table_name = "passwords",
-                                 restart = FALSE) {
+establish_db_connection <- function(table_name = "higgins",
+                                    password_table_name = "passwords",
+                                    restart = FALSE) {
+  keys <- yaml::yaml.load_file("dbkeys.yml")
   library("DBI")
   library("RPostgreSQL")
   assign("this_driver", dbDriver("PostgreSQL"), envir = submittr:::db_info)
   assign("this_connection", dbConnect(submittr:::db_info$this_driver,
-                   dbname = dbname,
-                   host = host,
-                   port = port,
-                   user = user,
-                   password = password),
+                   dbname = keys$dbname,
+                   host = keys$host,
+                   port = keys$port,
+                   user = keys$user,
+                   password = keys$password),
          envir = submittr:::db_info)
-  assign("this_connection_info",  list(dbname = dbname, host = host,
-                               port = port, user = user, password = password,
+  assign("this_connection_info",  list(dbname = keys$dbname, host = keys$host,
+                               port = keys$port, user = keys$user, password = keys$password,
                                table_name = table_name),
          envir = submittr:::db_info)
   PW <- if (length(password_table_name) > 0)
@@ -157,7 +159,9 @@ event_to_df <- function(tutorial_id = "blank",
     if ("correct" %in% names(data)) data$correct
     else if ("feedback" %in% names(data)) data$feedback$correct
     else "na"
-  data_frame(
+  if (is.null(correct)) correct <- "na"
+  cat("correct is:", capture.output(correct), "\n")
+  dplyr::data_frame(
     timestamp = Sys.time(),
     tutorial_id = tutorial_id,
     tutorial_version = tutorial_version,
@@ -167,6 +171,6 @@ event_to_df <- function(tutorial_id = "blank",
     type = event,
     label = data$label,
     correct = correct,
-    data = toJSON(data)
+    data = jsonlite::toJSON(data)
   )
 }

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Danny Kaplan" />
 
-<meta name="date" content="2017-11-20" />
+<meta name="date" content="2017-12-14" />
 
 <title>Organization of submittr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Organization of <code>submittr</code></h1>
 <h4 class="author"><em>Danny Kaplan</em></h4>
-<h4 class="date"><em>2017-11-20</em></h4>
+<h4 class="date"><em>2017-12-14</em></h4>
 
 
 
@@ -91,7 +91,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Of course, you’ll replace the quoted string with the actual path to the login-Rmd document. For instance, you could use this:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="st">`</span><span class="dt"></span><span class="st">``</span><span class="dt">{r child = system.file(&quot;login-mockup.Rmd&quot;, package = &quot;submittr&quot;)}</span>
 <span class="st">`</span><span class="st">``</span></code></pre></div>
-<p>As you’ll see, the way you customize <code>submittr</code> to use your own database and passwords is by creating a suitable Rmd-login document which contains your credentials, etc. You can (and typically would) use the same Rmd-login document for multiple tutorials.</p>
+<p>Use your own <code>&quot;login-mockup.Rmd&quot;</code> file if you want to customize the appearance of the login blocks in the learnr app. Other than that, there’s no reason not to use the system file.</p>
+<p>The Rmd-login document is a stand-alone Shiny app running in <code>shiny-prerendered</code> mode. By using this stand-alone app as a “child” chunk in your document, you are integrating the app into your learnr document. The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection: <code>create_submit_to_db()</code>. Among other things, <code>create_submit_to_db()</code> reads in the student-login password file (if any): . The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students.</p>
 </div>
 <div id="the-database-server" class="section level3">
 <h3>The database server</h3>
@@ -100,18 +101,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="the-rmd-login-document" class="section level3">
 <h3>The Rmd-login document</h3>
 <p>To log events, <code>submittr</code> needs to connect to your database. Optionally, your database can contain a password file for user authentication. To customize <code>submittr</code> to your database and passwords, you configure an Rmd-login document.</p>
-<p>Strictly speaking, the Rmd-login document is a stand-alone Shiny app running in <code>shiny-prerendered</code> mode. The app contains a few shiny widgets to handle user ID and password and so on. More important, the Shiny app calls one function to establish the database connection and read in the password file (if any): <code>create_submit_to_db()</code>. The arguments to this function carry your database login credentials, the name of the table in the database that is to store events, and the name of the password file (if any) used to authenticate students.</p>
 <p>You may want to start by creating your own Rmd-login based on the example in <code>system.file(&quot;login-mockup.Rmd&quot;, package = &quot;submittr&quot;)</code>. Store the Rmd-login file somewhere convenient where it can be accessed when your tutorial is pre-rendered to HTML. (NEED TO SAY MORE ABOUT THIS. IN THE SAME DIRECTORY AS YOUR APP? In your home directory on your development machine?)</p>
 <p>The file should contain Shiny server logic that includes a chunk like this which calls the <code>create_submit_to_db()</code> function with your credentials.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="st">`</span><span class="dt"></span><span class="st">``</span><span class="dt">{r echo = FALSE, context = &quot;server&quot;}</span>
 <span class="dt"># Connect to the database server</span>
 <span class="dt">options(tutorial.event_recorder = </span>
 <span class="dt">        create_submit_to_db(</span>
-<span class="dt">          dbname = &quot;database_name&quot;,</span>
-<span class="dt">          host = &quot;database_url&quot;, # e.g. web625.webfaction.com</span>
-<span class="dt">          port = 5432, # or whatever</span>
-<span class="dt">          user = &quot;database_user&quot;, # user account on the database</span>
-<span class="dt">          password = &quot;secret_password&quot;, # user password CAUTION </span>
 <span class="dt">          table_name = &quot;event_table_name&quot;, # e.g. &quot;Stats101&quot;</span>
 <span class="dt">          password_table_name = &quot;password_table_name&quot;) # e.g. &quot;passwords&quot;</span>
 <span class="dt">          )</span>
