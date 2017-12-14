@@ -6,7 +6,8 @@ Author: Daniel Kaplan
 Maintainer: Daniel Kaplan <kaplan@macalester.edu>
 Description: Handles user sign-in and the submission of event items from an R program, Shiny app, or learnr tutorial to a database
 License: What license is it under?
-Depends: shiny, DBI, RPostgreSQL, dplyr, dbplyr, tidyr, jsonlite
+Depends: 
+Imports: shiny, DBI, RPostgreSQL, dplyr, dbplyr, tidyr, jsonlite, yaml
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
