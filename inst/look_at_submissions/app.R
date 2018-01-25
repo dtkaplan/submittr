@@ -85,7 +85,7 @@ server <- function(input, output, session) {
   # if there is, establish the database connection
   submittr:::establish_db_connection(table_name = "higgins",
                                      password_table_name = "passwords") # puts connection in submittr:::db_info
-  cat("Connection is", capture.output(submittr:::db_info$this_connection))
+  #cat("Connection is", capture.output(submittr:::db_info$this_connection))
   state <- reactiveValues()
   state$user <- ""
   state$validated <- FALSE
@@ -114,12 +114,12 @@ server <- function(input, output, session) {
       # state$permitted_groups is the permitted set of groups from which the prof can choose
       if (submittr:::db_info$Password_table$role[ind] == "prof") {
         if (submittr:::db_info$Password_table$group[ind] == "ALL") {
-          cat("ALL the groups are available.\n")
+          #cat("ALL the groups are available.\n")
           # access to all the groups
           state$permitted_groups <- unique(submittr:::db_info$Password_table$group)
         } else {
           # just the specifically authorized groups
-          cat("Only specifically authorized groups.")
+          #cat("Only specifically authorized groups.")
           state$permitted_groups <- strsplit(submittr:::db_info$Password_table$group[ind], ":")
         }
       } else {
@@ -150,14 +150,14 @@ server <- function(input, output, session) {
 
   # get the selected_ components
   selected_documents <- reactive({
-    cat("Setting selected documents\n")
+    #cat("Setting selected documents\n")
     if (implicit_all_selected(input$documents))
       unique(state$Event_table$tutorial_id)
     else
       input$documents
   })
   selected_items <- reactive({
-    cat("Setting selected ITEMS\n")
+    #cat("Setting selected ITEMS\n")
     if (implicit_all_selected(input$items))
       unique(state$Event_table %>%
                  filter(tutorial_id %in% selected_documents()) %>%
@@ -165,14 +165,14 @@ server <- function(input, output, session) {
     else input$items
   })
   selected_groups <- reactive({
-    cat("Setting selected GROUPS\n")
+    #cat("Setting selected GROUPS\n")
     if (implicit_all_selected(input$groups))
       state$permitted_groups
     else
       input$groups
   })
   selected_submitters <- reactive({
-    cat("Setting selected SUBMITTERS\n")
+    #cat("Setting selected SUBMITTERS\n")
     if (implicit_all_selected(input$submitters))
       state$permitted_submitters
     else
